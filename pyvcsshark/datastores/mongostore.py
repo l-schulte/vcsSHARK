@@ -417,4 +417,3 @@ class CommitStorageProcess(multiprocessing.Process):
                 except Exception as e: # catch all exceptions
                     logger.info("Unexpected error while inserting hunks for commit: %s - %s" % (mongo_commit_id, commit_id))
                     logger.exception(e)
-                    raise
