@@ -415,5 +415,4 @@ class CommitStorageProcess(multiprocessing.Process):
                         except DocumentTooLarge:
                             logger.info("Document was too large for commit: %s - %s" % (mongo_commit_id, commit_id))
                 except Exception as e: # catch all exceptions
-                    logger.info("Unexpected error while inserting hunks for commit: %s - %s" % (mongo_commit_id, commit_id))
-                    logger.exception(e)
+                    logger.warn("Skipping hunks for commit %s - %s due to an unexpected error" % (mongo_commit_id, commit_id))
