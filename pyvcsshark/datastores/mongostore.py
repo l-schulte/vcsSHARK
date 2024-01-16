@@ -284,7 +284,7 @@ class CommitStorageProcess(multiprocessing.Process):
 
         # Create fileActions
         logger.debug("Process %s is setting file actions for commit with hash %s." % (self.proc_name, commit.id))
-        self.create_file_actions(commit.changedFiles, mongo_commit.id)
+        self.create_file_actions(commit.changedFiles, mongo_commit.id, mongo_commit.revision_hash)
 
     def create_branch_list(self, branches):
         """Creates a list of the different branch names, where a commit belongs to. We go through the \
@@ -346,7 +346,7 @@ class CommitStorageProcess(multiprocessing.Process):
             people_id = People.objects(name=name, email=email).only('id').get().id
         return people_id
 
-    def create_file_actions(self, files, mongo_commit_id):
+    def create_file_actions(self, files, mongo_commit_id, commit_id):
         """ Creates a list of object ids of type :class:`bson.objectid.ObjectId` for the different file actions of the
         commit by transforming the files into file actions of type FileAction, File, and Hunk (pycoshark library)
 
@@ -413,4 +413,8 @@ class CommitStorageProcess(multiprocessing.Process):
                         try:
                             hunk.save()
                         except DocumentTooLarge:
-                            logger.info("Document was too large for commit: %s" % mongo_commit_id)
+                            logger.info("Document was too large for commit: %s - %s" % (mongo_commit_id, commit_id))
+                except Exception as e: # catch all exceptions
+                    logger.info("Unexpected error while inserting hunks for commit: %s - %s" % (mongo_commit_id, commit_id))
+                    logger.exception(e)
+                    raise
