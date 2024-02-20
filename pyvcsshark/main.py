@@ -68,7 +68,9 @@ class Application(object):
             datastore.initialize(config, parser.get_project_url(), parser.repository_type)
             parser.parse(config.path, datastore, config.cores_per_job)
             parser.finalize()
-            joblib.dump(datastore, config.datastore_file)
+            
+            if config.datastore_file is not None:
+                joblib.dump(datastore, config.datastore_file)
 
         datastore.finalize()
             
