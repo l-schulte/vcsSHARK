@@ -234,7 +234,12 @@ class CommitStorageProcess(multiprocessing.Process):
         .. WARNING:: We only look for changed tags and branches here for already processed commits!
         """
         while True:
-            commit = self.queue.get()
+            commit: Commit = self.queue.get()
+
+            if commit.author_date > (self.last_commit_date + datetime.timedelta(days=5)):
+                self.queue.task_done()
+                continue
+
             logger.debug("Process %s is processing commit with hash %s." % (self.proc_name, commit.id))
 
             # Try to get the commit
