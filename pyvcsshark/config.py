@@ -25,7 +25,6 @@ class Config(object):
         self.project_name = args.project_name
         self.cores_per_job = args.cores_per_job
         self.ssl_enabled = args.ssl
-        self.datastore_file = args.datastore_file
 
     def __str__(self):
         return "Driver: %s, User: %s, Password: %s, Database: %s, Hostname: %s, Port: %s, AuthenticationDB: %s, " \

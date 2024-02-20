@@ -68,7 +68,6 @@ def start():
     parser.add_argument('--path', help='Path to the checked out repository directory', default=os.getcwd(),
                         type=readable_dir)
     parser.add_argument('--cores-per-job', help='Number of cores to use', default=4, type=int)
-    parser.add_argument('--datastore-file', help='File to store the datastore in', default=None)
 
     logger.info("Reading out config from command line")
 

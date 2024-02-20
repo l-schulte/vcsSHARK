@@ -5,8 +5,6 @@ import logging
 import sys
 import traceback
 import timeit
-import joblib
-import os.path
 
 logger = logging.getLogger("main")
 
@@ -44,33 +42,24 @@ class Application(object):
         # Only find correct parser and parse,
         # Measure execution time
         start_time = timeit.default_timer()
-
-        # check if datastore file exists and load it with joblib
-        if config.datastore_file is not None and os.path.isfile(config.datastore_file):
-            logger.info("Loading datastore file %s" % config.datastore_file)
-            datastore = joblib.load(config.datastore_file)
-            logger.info("Datastore file loaded")
-        else:           
-            datastore = BaseStore.find_correct_datastore(config.db_driver)
-            logger.info("Using %s for storing the results of repository %s" % (datastore.__class__.__name__, config.path))
-
-            try:
-                parser = BaseParser.find_correct_parser(config.path)
-                logger.info("Using %s for parsing directory %s" % (parser.__class__.__name__, config.path))
-            except Exception as e:
-                traceback.print_exc()
-                logger.exception("Failed to instantiate parser.")
-                sys.exit(1)
                 
-            # Set projectName, url and repository type, as they
-            # are most likely required for storing into a datastore (e.g. creating a project table)
-            parser.initialize()
-            datastore.initialize(config, parser.get_project_url(), parser.repository_type)
-            parser.parse(config.path, datastore, config.cores_per_job)
-            parser.finalize()
+        datastore = BaseStore.find_correct_datastore(config.db_driver)
+        logger.info("Using %s for storing the results of repository %s" % (datastore.__class__.__name__, config.path))
+
+        try:
+            parser = BaseParser.find_correct_parser(config.path)
+            logger.info("Using %s for parsing directory %s" % (parser.__class__.__name__, config.path))
+        except Exception as e:
+            traceback.print_exc()
+            logger.exception("Failed to instantiate parser.")
+            sys.exit(1)
             
-            if config.datastore_file is not None:
-                joblib.dump(datastore, config.datastore_file)
+        # Set projectName, url and repository type, as they
+        # are most likely required for storing into a datastore (e.g. creating a project table)
+        parser.initialize()
+        datastore.initialize(config, parser.get_project_url(), parser.repository_type)
+        parser.parse(config.path, datastore, config.cores_per_job)
+        parser.finalize()
 
         datastore.finalize()
             
