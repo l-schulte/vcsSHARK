@@ -102,7 +102,7 @@ class MongoStore(BaseStore):
         os.remove(tar_gz_name)
 
         # Get the last commit by date of the project (if there is any)
-        last_commit = Commit.objects(vcs_system_id=self.vcs_system_id)\
+        last_commit = Commit.objects(vcs_system_id=self.vcs_system_id, committer_date__exists=True)\
             .only('committer_date').order_by('committer_date').first()
 
         if last_commit is not None:
