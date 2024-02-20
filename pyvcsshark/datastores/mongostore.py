@@ -7,6 +7,7 @@ from pymongo.errors import DocumentTooLarge, DuplicateKeyError
 from pyvcsshark.datastores.basestore import BaseStore
 from mongoengine import connect, DoesNotExist, NotUniqueError
 from pycoshark.mongomodels import VCSSystem, Project, Commit, Tag, File, People, FileAction, Hunk, Branch
+from pyvcsshark.parser.models import CommitModel
 from pycoshark.utils import create_mongodb_uri_string
 
 import multiprocessing
@@ -234,9 +235,9 @@ class CommitStorageProcess(multiprocessing.Process):
         .. WARNING:: We only look for changed tags and branches here for already processed commits!
         """
         while True:
-            commit: Commit = self.queue.get()
+            commit: CommitModel = self.queue.get()
 
-            if commit.author_date > (self.last_commit_date + datetime.timedelta(days=5)):
+            if commit.authorDate > (self.last_commit_date + datetime.timedelta(days=5)):
                 self.queue.task_done()
                 continue
 
