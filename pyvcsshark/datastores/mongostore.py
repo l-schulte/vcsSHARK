@@ -238,6 +238,7 @@ class CommitStorageProcess(multiprocessing.Process):
             commit: CommitModel = self.queue.get()
 
             if commit.authorDate > (self.last_commit_date + datetime.timedelta(days=5)):
+                logger.debug("Process %s is skipping commit with hash %s, because it has already been processed." % (self.proc_name, commit.id))
                 self.queue.task_done()
                 continue
 
