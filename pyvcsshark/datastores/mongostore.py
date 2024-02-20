@@ -103,17 +103,21 @@ class MongoStore(BaseStore):
 
         # Get the last commit by date of the project (if there is any)
         last_commit = Commit.objects(vcs_system_id=self.vcs_system_id, committer_date__exists=True)\
-            .only('committer_date').order_by('committer_date').first()
+            .only('committer_date').order_by('-committer_date').first()
 
         if last_commit is not None:
             last_commit_date = last_commit.committer_date
         else:
             last_commit_date = None
 
+        existing_revision_hashes = set([
+            c.revision_hash for c in Commit.objects(vcs_system_id=self.vcs_system_id, committer_date__exists=True).only('revision_hash')
+        ])
+
         # Start worker, they will wait till something comes into the queue and then process it
         for i in range(self.cores_per_job):
             name = "StorageProcess-%d" % i
-            process = CommitStorageProcess(self.commit_queue, self.vcs_system_id, last_commit_date, self.config, name)
+            process = CommitStorageProcess(self.commit_queue, self.vcs_system_id, last_commit_date, existing_revision_hashes, self.config, name)
             process.daemon = True
             process.start()
 
@@ -206,7 +210,7 @@ class CommitStorageProcess(multiprocessing.Process):
     :param last_commit_date: object of class :class:`datetime.datetime`, which holds the last commit that was parsed
     :param config: object of class :class:`pyvcsshark.config.Config`, which holds configuration information
     """
-    def __init__(self, queue, vcs_system_id, last_commit_date, config, name):
+    def __init__(self, queue, vcs_system_id, last_commit_date, existing_revision_hashes, config, name):
         multiprocessing.Process.__init__(self)
         uri = create_mongodb_uri_string(config.db_user, config.db_password, config.db_hostname, config.db_port,
                                         config.db_authentication, config.ssl_enabled)
@@ -214,6 +218,7 @@ class CommitStorageProcess(multiprocessing.Process):
         self.queue = queue
         self.vcs_system_id = vcs_system_id
         self.last_commit_date = last_commit_date
+        self.existing_revision_hashes = existing_revision_hashes
         self.proc_name = name
 
     def run(self):
@@ -238,9 +243,8 @@ class CommitStorageProcess(multiprocessing.Process):
             commit: CommitModel = self.queue.get()
 
             logger.debug("Process %s is processing commit with hash %s." % (self.proc_name, commit.id))
-            logger.debug(f'\t{commit.authorDate}, {self.last_commit_date}, {self.last_commit_date + datetime.timedelta(days=5)}, {commit.authorDate > (self.last_commit_date + datetime.timedelta(days=5))}')
 
-            if commit.authorDate > (self.last_commit_date + datetime.timedelta(days=5)):
+            if commit.id in self.existing_revision_hashes:
                 logger.debug("Process %s is skipping commit with hash %s, because it has already been processed." % (self.proc_name, commit.id))
                 self.queue.task_done()
                 continue
