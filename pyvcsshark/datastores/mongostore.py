@@ -103,7 +103,7 @@ class MongoStore(BaseStore):
 
         # Get the last commit by date of the project (if there is any)
         last_commit = Commit.objects(vcs_system_id=self.vcs_system_id)\
-            .only('committer_date').order_by('-committer_date').first()
+            .only('committer_date').order_by('committer_date').first()
 
         if last_commit is not None:
             last_commit_date = last_commit.committer_date
