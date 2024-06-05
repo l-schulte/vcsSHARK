@@ -354,6 +354,8 @@ class CommitParserProcess(multiprocessing.Process):
         :param initial_commit: indicates if we have an initial commit
         """
 
+        return []
+
         list_of_hunks = []
 
         for hunk in hunks:
